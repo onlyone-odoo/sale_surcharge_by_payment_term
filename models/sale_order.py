@@ -11,9 +11,6 @@ class SaleOrder(models.Model):
     @api.onchange("payment_term_id")
     def _onchange_payment_term_id(self):
         """Add or update surcharge line based on payment term."""
-        # Call super if there is any original onchange
-        super(SaleOrder, self)._onchange_payment_term_id()
-
         if not self.payment_term_id:
             return
 
