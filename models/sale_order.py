@@ -11,11 +11,11 @@ class SaleOrder(models.Model):
     @api.onchange("payment_term_id")
     def _onchange_payment_term_id(self):
         """Add or update surcharge line based on payment term."""
+        # First, always remove any existing surcharge lines to clean up
+        self.order_line = self.order_line.filtered(lambda line: not line.is_surcharge)
+
         if not self.payment_term_id:
             return
-
-        # First, remove any existing surcharge lines
-        self.order_line = self.order_line.filtered(lambda line: not line.is_surcharge)
 
         surcharge_perc = self.payment_term_id.surcharge_percentage
         surcharge_prod = self.payment_term_id.surcharge_product_id
