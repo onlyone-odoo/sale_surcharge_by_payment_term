@@ -41,7 +41,6 @@ class SaleOrder(models.Model):
                 "name": _("Surcharge for payment term: %s%%") % surcharge_perc,
                 "product_uom_qty": 1,
                 "price_unit": surcharge_amount,
-                "tax_id": False,  # Assuming no taxes on surcharge, adjust if needed
                 "is_surcharge": True,
             }
         )
