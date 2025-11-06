@@ -50,22 +50,21 @@ class SaleOrder(models.Model):
             # Reload record for fresh data post-write
             order = order.browse(order.id)
 
-            surcharge_perc = (
-                order.payment_term_id.surcharge_percentage
-                if order.payment_term_id
-                else 0
-            )
-            surcharge_prod = (
-                order.payment_term_id.surcharge_product_id
-                if order.payment_term_id
-                else False
+            surcharge_lines = order.order_line.filtered(lambda line: line.is_surcharge)
+            applies_surcharge = bool(
+                order.payment_term_id
+                and order.payment_term_id.surcharge_product_id
+                and order.payment_term_id.surcharge_percentage > 0
             )
 
-            # Only remove surcharge lines if surcharge does NOT apply
-            if not surcharge_prod or surcharge_perc <= 0:
-                surcharge_lines = order.order_line.filtered(
-                    lambda line: line.is_surcharge
-                )
+            if applies_surcharge:
+                # Ensure exactly one surcharge line (unlink extras if more than one)
+                if len(surcharge_lines) > 1:
+                    surcharge_lines[1:].with_context(
+                        skip_surcharge_update=True
+                    ).unlink()
+            else:
+                # Unlink all surcharge lines if surcharge does not apply
                 if surcharge_lines:
                     surcharge_lines.with_context(skip_surcharge_update=True).unlink()
 
