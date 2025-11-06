@@ -47,6 +47,9 @@ class SaleOrder(models.Model):
         res = super(SaleOrder, self).write(vals)
 
         for order in self:
+            # Reload record for fresh data post-write
+            order = order.browse(order.id)
+
             # Remove existing surcharge lines post-save
             surcharge_lines = order.order_line.filtered(lambda line: line.is_surcharge)
             if surcharge_lines:
