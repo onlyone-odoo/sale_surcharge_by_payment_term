@@ -28,7 +28,7 @@ class SaleOrder(models.Model):
 
         surcharge_amount = subtotal * (surcharge_perc / 100)
 
-        # Add new surcharge line in memory
+        # Add new surcharge line in memory (taxes will be computed from product)
         self.order_line += self.env["sale.order.line"].new(
             {
                 "product_id": surcharge_prod.id,
@@ -41,16 +41,16 @@ class SaleOrder(models.Model):
 
     def write(self, vals):
         """Override write to ensure surcharge consistency post-save."""
+        if self.env.context.get("skip_surcharge_update"):
+            return super(SaleOrder, self).write(vals)
+
         res = super(SaleOrder, self).write(vals)
 
         for order in self:
-            if "payment_term_id" not in vals and not order.payment_term_id:
-                continue  # Skip if no change in payment_term and none set
-
             # Remove existing surcharge lines post-save
             surcharge_lines = order.order_line.filtered(lambda line: line.is_surcharge)
             if surcharge_lines:
-                surcharge_lines.unlink()
+                surcharge_lines.with_context(skip_surcharge_update=True).unlink()
 
             if not order.payment_term_id:
                 continue
@@ -66,8 +66,10 @@ class SaleOrder(models.Model):
 
             surcharge_amount = subtotal * (surcharge_perc / 100)
 
-            # Create persistent surcharge line
-            order.env["sale.order.line"].create(
+            # Create persistent surcharge line (taxes from product)
+            order.env["sale.order.line"].with_context(
+                skip_surcharge_update=True
+            ).create(
                 {
                     "order_id": order.id,
                     "product_id": surcharge_prod.id,
