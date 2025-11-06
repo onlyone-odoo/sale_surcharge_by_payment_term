@@ -50,37 +50,23 @@ class SaleOrder(models.Model):
             # Reload record for fresh data post-write
             order = order.browse(order.id)
 
-            # Remove existing surcharge lines post-save
-            surcharge_lines = order.order_line.filtered(lambda line: line.is_surcharge)
-            if surcharge_lines:
-                surcharge_lines.with_context(skip_surcharge_update=True).unlink()
-
-            if not order.payment_term_id:
-                continue
-
-            surcharge_perc = order.payment_term_id.surcharge_percentage
-            surcharge_prod = order.payment_term_id.surcharge_product_id
-
-            if not surcharge_prod or surcharge_perc <= 0:
-                continue
-
-            # Calculate subtotal excluding old surcharges
-            subtotal = sum(line.price_subtotal for line in order.order_line)
-
-            surcharge_amount = subtotal * (surcharge_perc / 100)
-
-            # Create persistent surcharge line (taxes from product)
-            order.env["sale.order.line"].with_context(
-                skip_surcharge_update=True
-            ).create(
-                {
-                    "order_id": order.id,
-                    "product_id": surcharge_prod.id,
-                    "name": _("Surcharge for payment term: %s%%") % surcharge_perc,
-                    "product_uom_qty": 1,
-                    "price_unit": surcharge_amount,
-                    "is_surcharge": True,
-                }
+            surcharge_perc = (
+                order.payment_term_id.surcharge_percentage
+                if order.payment_term_id
+                else 0
             )
+            surcharge_prod = (
+                order.payment_term_id.surcharge_product_id
+                if order.payment_term_id
+                else False
+            )
+
+            # Only remove surcharge lines if surcharge does NOT apply
+            if not surcharge_prod or surcharge_perc <= 0:
+                surcharge_lines = order.order_line.filtered(
+                    lambda line: line.is_surcharge
+                )
+                if surcharge_lines:
+                    surcharge_lines.with_context(skip_surcharge_update=True).unlink()
 
         return res
