@@ -12,7 +12,7 @@
     "website": "https://onlyone.odoo.com/",
     "license": "AGPL-3",
     "category": "Sales",
-    "version": "17.0.2.1.0",
+    "version": "17.0.2.1.1",
     "depends": ["sale", "account"],
     "data": [
         "views/account_payment_term_views.xml",
