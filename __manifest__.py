@@ -12,13 +12,14 @@
     "website": "https://onlyone.odoo.com/",
     "license": "AGPL-3",
     "category": "Sales",
-    "version": "17.0.2.1.1",
+    "version": "18.0.1.0.0",
     "depends": ["sale", "account"],
     "data": [
         "views/account_payment_term_views.xml",
         "views/sale_order_views.xml",
     ],
-    "installable": True,
+    "installable": False,
     "application": False,
     "auto_install": False,
+    #ESTE ES EL MODULO DE 17 FALTA MIGRARLO
 }
